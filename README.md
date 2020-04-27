@@ -28,3 +28,13 @@ You can check out [the Next.js GitHub repository](https://github.com/zeit/next.j
 The easiest way to deploy your Next.js app is to use the [ZEIT Now Platform](https://zeit.co/import?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## To use TypeScript
+
+To apply TypeScript, Run this command.
+
+```bash
+yarn add --dev typescript @types/react @types/node
+```
+
+And `tsconfig.json` is automatically created when run the server.
