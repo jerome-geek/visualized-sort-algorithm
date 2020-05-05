@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { range, shuffle } from "lodash";
+import Bar from "./Bar";
 
-const getArr = () => shuffle(range(1, 11));
+const SIZE = 30;
+const getArr = () => shuffle(range(1, SIZE + 1));
 
 const swap = (arr: number[], a: number, b: number) => {
   const tmp = arr[a];
@@ -35,7 +37,11 @@ export default () => {
 
   return (
     <div>
-      <div className="board">{arr.join(",")}</div>
+      <div className="board">
+        {arr.map((value, i) => (
+          <Bar key={i} value={value} index={i} />
+        ))}
+      </div>
       <div className="buttonBox">
         <button onClick={handleShuffle}>shuffle</button>
         <button onClick={handleSort}>sort</button>
@@ -48,6 +54,7 @@ export default () => {
             color: white;
             background-color: green;
             font-size: 40px;
+            position: relative;
           }
           .buttonBox {
             width: 100%;
