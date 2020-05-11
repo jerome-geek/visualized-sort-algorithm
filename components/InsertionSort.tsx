@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, SetStateAction } from "react";
 import { range, shuffle } from "lodash";
 import Bar from "./Bar";
 
@@ -11,13 +11,29 @@ const swap = (arr: number[], a: number, b: number) => {
   arr[b] = tmp;
 };
 
-const sort = (arr: number[]) => {
+const delaySetArr = (
+  arr: number[],
+  setArr: (value: SetStateAction<number[]>) => void
+) => {
+  return new Promise((resolve) => {
+    setArr([...arr]);
+    setTimeout(() => {
+      resolve();
+    }, 10);
+  });
+};
+
+const sort = async (
+  arr: number[],
+  setArr: (value: SetStateAction<number[]>) => void
+) => {
   // https://en.wikipedia.org/wiki/Insertion_sort
   let i = 1;
   while (i < arr.length) {
     let j = i;
     while (j > 0 && arr[j - 1] > arr[j]) {
       swap(arr, j, j - 1);
+      await delaySetArr(arr, setArr);
       j = j - 1;
     }
     i = i + 1;
@@ -31,7 +47,7 @@ export default () => {
 
   const handleSort = () => {
     const sortedArr = [...arr];
-    sort(sortedArr);
+    sort(sortedArr, setArr);
     setArr(sortedArr);
   };
 
@@ -42,10 +58,12 @@ export default () => {
           <Bar key={i} value={value} index={i} />
         ))}
       </div>
+
       <div className="buttonBox">
         <button onClick={handleShuffle}>shuffle</button>
         <button onClick={handleSort}>sort</button>
       </div>
+
       <style jsx>
         {`
           .board {
