@@ -1,4 +1,4 @@
-import { useState, SetStateAction } from "react";
+import { useState, SetStateAction, Dispatch } from "react";
 import { range, shuffle } from "lodash";
 import Bar from "./Bar";
 
@@ -11,44 +11,52 @@ const swap = (arr: number[], a: number, b: number) => {
   arr[b] = tmp;
 };
 
-const delaySetArr = (
-  arr: number[],
-  setArr: (value: SetStateAction<number[]>) => void
-) => {
+type TSetArr = Dispatch<SetStateAction<number[]>>;
+type TSetIndex = Dispatch<SetStateAction<number>>;
+const delaySetArr = (arr: number[], setArr: TSetArr) => {
   return new Promise((resolve) => {
     setArr([...arr]);
     setTimeout(() => {
       resolve();
-    }, 10);
+    }, 100);
   });
 };
 
 const sort = async (
   arr: number[],
-  setArr: (value: SetStateAction<number[]>) => void
+  setArr: TSetArr,
+  setIndexI: TSetIndex,
+  setIndexJ: TSetIndex
 ) => {
   // https://en.wikipedia.org/wiki/Insertion_sort
   let i = 1;
   while (i < arr.length) {
     let j = i;
+    setIndexJ(i);
     while (j > 0 && arr[j - 1] > arr[j]) {
       swap(arr, j, j - 1);
       await delaySetArr(arr, setArr);
       j = j - 1;
+      setIndexJ(j - 1);
     }
     i = i + 1;
+    setIndexI(i);
   }
 };
 
 export default () => {
   const [arr, setArr] = useState(getArr());
+  const [indexI, setIndexI] = useState(1);
+  const [indexJ, setIndexJ] = useState(1);
+  const [isRunning, setIsRunning] = useState(false);
 
   const handleShuffle = () => setArr(getArr());
 
   const handleSort = () => {
     const sortedArr = [...arr];
-    sort(sortedArr, setArr);
+    sort(sortedArr, setArr, setIndexI, setIndexJ);
     setArr(sortedArr);
+    setIsRunning(true);
   };
 
   return (
@@ -58,10 +66,23 @@ export default () => {
           <Bar key={i} value={value} index={i} />
         ))}
       </div>
+      <div
+        className="index i"
+        style={{ transform: `translateX(${indexI * 22}px)` }}
+      >
+        i
+      </div>
+      <div
+        className="index j"
+        style={{ transform: `translateX(${indexJ * 22}px)` }}
+      >
+        j
+      </div>
 
       <div className="buttonBox">
-        <button onClick={handleShuffle}>shuffle</button>
-        <button onClick={handleSort}>sort</button>
+        {!isRunning && <button onClick={handleShuffle}>shuffle</button>}
+        {!isRunning && <button onClick={handleSort}>sort</button>}
+        {isRunning && <div className="running">Running....</div>}
       </div>
 
       <style jsx>
@@ -82,6 +103,22 @@ export default () => {
           }
           button {
             font-size: 40px;
+          }
+          .running {
+            font-size: 40px;
+          }
+          .index {
+            position: absolute;
+            width: 20px;
+            opacity: 0.8;
+          }
+          .index.i {
+            background-color: yellow;
+            color: black;
+          }
+          .index.j {
+            background-color: blue;
+            color: white;
           }
         `}
       </style>
