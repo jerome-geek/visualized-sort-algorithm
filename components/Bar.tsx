@@ -1,4 +1,5 @@
-import { FC, Fragment } from "react";
+import { FC, Fragment } from 'react';
+import { getX } from '../util/util';
 
 interface IPropsBar {
   value: number;
@@ -9,7 +10,7 @@ const Bar: FC<IPropsBar> = (props) => {
   const { value, index } = props;
   const style = {
     height: value * 10,
-    transform: `translateX(${index * 22}px)`,
+    transform: `translateX(${getX(index)}px)`,
   };
 
   return (

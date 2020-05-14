@@ -1,8 +1,15 @@
-import { useState, SetStateAction, Dispatch } from "react";
-import { range, shuffle } from "lodash";
-import Bar from "./Bar";
+import { useState, SetStateAction, Dispatch } from 'react';
+import { range, shuffle } from 'lodash';
+import Bar from './Bar';
+import { getX } from '../util/util';
 
-const SIZE = 30;
+type TSetArr = Dispatch<SetStateAction<number[]>>;
+type TSetIndex = Dispatch<SetStateAction<number>>;
+type TSet = Dispatch<SetStateAction<any>>;
+
+const DURATION = 40;
+const SIZE = 10;
+
 const getArr = () => shuffle(range(1, SIZE + 1));
 
 const swap = (arr: number[], a: number, b: number) => {
@@ -11,16 +18,11 @@ const swap = (arr: number[], a: number, b: number) => {
   arr[b] = tmp;
 };
 
-type TSetArr = Dispatch<SetStateAction<number[]>>;
-type TSetIndex = Dispatch<SetStateAction<number>>;
-const delaySetArr = (arr: number[], setArr: TSetArr) => {
-  return new Promise((resolve) => {
-    setArr([...arr]);
-    setTimeout(() => {
-      resolve();
-    }, 100);
+const delaySet = (value: any, setArr: TSet) =>
+  new Promise((resolve) => {
+    setArr(value);
+    setTimeout(resolve, DURATION);
   });
-};
 
 const sort = async (
   arr: number[],
@@ -32,15 +34,15 @@ const sort = async (
   let i = 1;
   while (i < arr.length) {
     let j = i;
-    setIndexJ(i);
+    await delaySet(j, setIndexJ);
     while (j > 0 && arr[j - 1] > arr[j]) {
       swap(arr, j, j - 1);
-      await delaySetArr(arr, setArr);
+      await delaySet([...arr], setArr);
       j = j - 1;
-      setIndexJ(j - 1);
+      await delaySet(j, setIndexJ);
     }
     i = i + 1;
-    setIndexI(i);
+    await delaySet(i, setIndexI);
   }
 };
 
@@ -50,13 +52,16 @@ export default () => {
   const [indexJ, setIndexJ] = useState(1);
   const [isRunning, setIsRunning] = useState(false);
 
-  const handleShuffle = () => setArr(getArr());
+  const handleShuffle = () => {
+    setArr(getArr());
+    setIndexI(1);
+    setIndexJ(1);
+  };
 
-  const handleSort = () => {
-    const sortedArr = [...arr];
-    sort(sortedArr, setArr, setIndexI, setIndexJ);
-    setArr(sortedArr);
+  const handleSort = async () => {
     setIsRunning(true);
+    await sort(arr, setArr, setIndexI, setIndexJ);
+    setIsRunning(false);
   };
 
   return (
@@ -68,13 +73,13 @@ export default () => {
       </div>
       <div
         className="index i"
-        style={{ transform: `translateX(${indexI * 22}px)` }}
+        style={{ transform: `translateX(${getX(indexI)}px)` }}
       >
         i
       </div>
       <div
         className="index j"
-        style={{ transform: `translateX(${indexJ * 22}px)` }}
+        style={{ transform: `translateX(${getX(indexJ)}px)` }}
       >
         j
       </div>
