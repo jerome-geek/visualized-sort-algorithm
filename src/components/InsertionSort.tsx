@@ -1,43 +1,43 @@
-import { FC, useState, SetStateAction, Dispatch, memo } from 'react';
-import { range, shuffle } from 'lodash';
+import { FC, useState, memo, MutableRefObject, useEffect, useRef } from 'react';
 import Bar from './Bar';
-import { getX } from '../util/util';
+import constants from '../../util/constants';
+import { getX, getArr, initArr } from '../../util/util';
+import { TSet, TSetArr, TSetIndex, TSetX } from '../../util/type';
 
-type TSetArr = Dispatch<SetStateAction<number[]>>;
-type TSetIndex = Dispatch<SetStateAction<number>>;
-type TSet = Dispatch<SetStateAction<any>>;
-
-const DURATION = 40;
-const SIZE = 30;
-
-const getArr = () => shuffle(range(1, SIZE + 1));
-
-const swap = (arr: number[], a: number, b: number) => {
+const swap = (arr: IExtendedBar[], a: number, b: number) => {
   const tmp = arr[a];
   arr[a] = arr[b];
   arr[b] = tmp;
 };
 
-const delaySet = (value: any, set: TSet) =>
+const delaySet = (value: number, set: TSet) =>
   new Promise((resolve) => {
     set(value);
-    setTimeout(resolve, DURATION);
+    setTimeout(() => resolve(value), constants.DURATION);
   });
 
+interface IExtendedBar {
+  value: number;
+  refSetX: MutableRefObject<TSetX>;
+}
+
 const sort = async (
-  arr: number[],
+  extendedBarArr: IExtendedBar[],
   setArr: TSetArr,
   setIndexI: TSetIndex,
   setIndexJ: TSetIndex
 ) => {
   // https://en.wikipedia.org/wiki/Insertion_sort
   let i = 1;
-  while (i < arr.length) {
+  while (i < extendedBarArr.length) {
     let j = i;
     await delaySet(j, setIndexJ);
-    while (j > 0 && arr[j - 1] > arr[j]) {
-      swap(arr, j, j - 1);
-      await delaySet([...arr], setArr);
+    while (j > 0 && extendedBarArr[j - 1].value > extendedBarArr[j].value) {
+      await Promise.all([
+        delaySet(getX(j - 1), extendedBarArr[j].refSetX.current),
+        delaySet(getX(j), extendedBarArr[j - 1].refSetX.current),
+      ]);
+      swap(extendedBarArr, j, j - 1);
       j = j - 1;
       await delaySet(j, setIndexJ);
     }
@@ -48,19 +48,28 @@ const sort = async (
 
 interface IPropsBoard {
   arr: number[];
+  refExtendedBarArr: MutableRefObject<IExtendedBar[]>;
 }
 
 const areArrEqual = (oldProps: IPropsBoard, props: IPropsBoard) => {
   return oldProps.arr === props.arr;
 };
 
-const Board: FC<IPropsBoard> = (props) => {
-  const { arr } = props;
+const Board: FC<IPropsBoard> = ({ arr, refExtendedBarArr }) => {
+  const extendedBarArr = arr.map((value) => ({
+    value,
+    refSetX: useRef<TSetX>(null),
+  }));
+  useEffect(() => {
+    refExtendedBarArr.current = extendedBarArr;
+  }, [arr]);
   return (
     <div className="board">
-      {arr.map((value, i) => {
+      {extendedBarArr.map((item, i) => {
         console.log('render Bar');
-        return <Bar key={i} value={value} index={i} />;
+        return (
+          <Bar key={i} value={item.value} index={i} refSetX={item.refSetX} />
+        );
       })}
       <style jsx>{`
         .board {
@@ -80,10 +89,12 @@ const MemorizedBoard = memo(Board, areArrEqual);
 
 export default () => {
   const [onOff, setOnOff] = useState('on');
-  const [arr, setArr] = useState(getArr());
+  const [arr, setArr] = useState(initArr);
   const [indexI, setIndexI] = useState(1);
   const [indexJ, setIndexJ] = useState(1);
   const [isRunning, setIsRunning] = useState(false);
+  const refExtendedBarArr = useRef<IExtendedBar[]>([]);
+  useEffect(() => setArr(getArr()), []);
 
   const handleShuffle = () => {
     setArr(getArr());
@@ -93,7 +104,7 @@ export default () => {
 
   const handleSort = async () => {
     setIsRunning(true);
-    await sort(arr, setArr, setIndexI, setIndexJ);
+    await sort(refExtendedBarArr.current, setArr, setIndexI, setIndexJ);
     setIsRunning(false);
   };
 
@@ -101,7 +112,7 @@ export default () => {
 
   return (
     <div>
-      <MemorizedBoard arr={arr} />
+      <MemorizedBoard arr={arr} refExtendedBarArr={refExtendedBarArr} />
       <div
         className="index i"
         style={{ transform: `translateX(${getX(indexI)}px)` }}
@@ -131,6 +142,7 @@ export default () => {
           button {
             font-size: 40px;
           }
+
           .running {
             font-size: 40px;
           }

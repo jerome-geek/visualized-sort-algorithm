@@ -1,17 +1,20 @@
-import { FC, Fragment } from 'react';
-import { getX } from '../util/util';
+import { FC, Fragment, useState, MutableRefObject } from 'react';
+import { getX } from '../../util/util';
+import { TSetX } from '../../util/type';
 
 interface IPropsBar {
   value: number;
   index: number;
+  refSetX: MutableRefObject<TSetX>;
 }
 
-const Bar: FC<IPropsBar> = (props) => {
-  const { value, index } = props;
+const Bar: FC<IPropsBar> = ({ value, index, refSetX }) => {
+  const [x, setX] = useState(getX(index));
   const style = {
     height: value * 10,
-    transform: `translateX(${getX(index)}px)`,
+    transform: `translateX(${x}px)`,
   };
+  refSetX.current = setX;
 
   return (
     <Fragment>

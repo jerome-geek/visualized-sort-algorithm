@@ -1,5 +1,5 @@
-import Head from "next/head";
-import InsertionSort from "../components/InsertionSort";
+import Head from 'next/head';
+import InsertionSort from '../src/components/InsertionSort';
 
 export default function Home() {
   return (
