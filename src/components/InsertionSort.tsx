@@ -1,20 +1,15 @@
 import { FC, useState, memo, MutableRefObject, useEffect, useRef } from 'react';
+import { tween } from 'tweening-js';
 import Bar from './Bar';
 import constants from '../../util/constants';
 import { getX, getArr, initArr } from '../../util/util';
-import { TSet, TSetArr, TSetIndex, TSetX } from '../../util/type';
+import { TSetIndex, TSetX } from '../../util/type';
 
 const swap = (arr: IExtendedBar[], a: number, b: number) => {
   const tmp = arr[a];
   arr[a] = arr[b];
   arr[b] = tmp;
 };
-
-const delaySet = (value: number, set: TSet) =>
-  new Promise((resolve) => {
-    set(value);
-    setTimeout(() => resolve(value), constants.DURATION);
-  });
 
 interface IExtendedBar {
   value: number;
@@ -23,26 +18,37 @@ interface IExtendedBar {
 
 const sort = async (
   extendedBarArr: IExtendedBar[],
-  setArr: TSetArr,
   setIndexI: TSetIndex,
   setIndexJ: TSetIndex
 ) => {
   // https://en.wikipedia.org/wiki/Insertion_sort
-  let i = 1;
+  let i = 1,
+    j = 1;
   while (i < extendedBarArr.length) {
-    let j = i;
-    await delaySet(j, setIndexJ);
+    await tween(j, i, setIndexJ, constants.DURATION).promise();
+    j = i;
     while (j > 0 && extendedBarArr[j - 1].value > extendedBarArr[j].value) {
       await Promise.all([
-        delaySet(getX(j - 1), extendedBarArr[j].refSetX.current),
-        delaySet(getX(j), extendedBarArr[j - 1].refSetX.current),
+        tween(
+          j,
+          getX(j - 1),
+          extendedBarArr[j].refSetX.current,
+          constants.DURATION
+        ).promise(),
+        tween(
+          j - 1,
+          getX(j),
+          extendedBarArr[j - 1].refSetX.current,
+          constants.DURATION
+        ).promise(),
       ]);
       swap(extendedBarArr, j, j - 1);
+
+      await tween(j, j - 1, setIndexJ, constants.DURATION).promise();
       j = j - 1;
-      await delaySet(j, setIndexJ);
     }
+    await tween(i, i + 1, setIndexI, constants.DURATION).promise();
     i = i + 1;
-    await delaySet(i, setIndexI);
   }
 };
 
@@ -104,7 +110,7 @@ export default () => {
 
   const handleSort = async () => {
     setIsRunning(true);
-    await sort(refExtendedBarArr.current, setArr, setIndexI, setIndexJ);
+    await sort(refExtendedBarArr.current, setIndexI, setIndexJ);
     setIsRunning(false);
   };
 
