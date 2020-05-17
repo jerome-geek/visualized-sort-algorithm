@@ -1,5 +1,6 @@
 import { FC, useState, memo, MutableRefObject, useEffect, useRef } from 'react';
 import { tween } from 'tweening-js';
+import { uniqueId } from 'lodash';
 import Bar from './Bar';
 import constants from '../../util/constants';
 import { getX, getArr, initArr } from '../../util/util';
@@ -57,7 +58,7 @@ interface IPropsBoard {
   refExtendedBarArr: MutableRefObject<IExtendedBar[]>;
 }
 
-const areArrEqual = (oldProps: IPropsBoard, props: IPropsBoard) => {
+const isArrEqual = (oldProps: IPropsBoard, props: IPropsBoard) => {
   return oldProps.arr === props.arr;
 };
 
@@ -72,9 +73,13 @@ const Board: FC<IPropsBoard> = ({ arr, refExtendedBarArr }) => {
   return (
     <div className="board">
       {extendedBarArr.map((item, i) => {
-        console.log('render Bar');
         return (
-          <Bar key={i} value={item.value} index={i} refSetX={item.refSetX} />
+          <Bar
+            key={`${uniqueId('set')}:${i}`}
+            value={item.value}
+            index={i}
+            refSetX={item.refSetX}
+          />
         );
       })}
       <style jsx>{`
@@ -91,7 +96,7 @@ const Board: FC<IPropsBoard> = ({ arr, refExtendedBarArr }) => {
   );
 };
 
-const MemorizedBoard = memo(Board, areArrEqual);
+const MemorizedBoard = memo(Board, isArrEqual);
 
 export default () => {
   const [onOff, setOnOff] = useState('on');
