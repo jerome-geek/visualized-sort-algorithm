@@ -1,6 +1,7 @@
 import { FC, useState, memo, MutableRefObject, useEffect, useRef } from 'react';
 import { tween } from 'tweening-js';
 import { uniqueId } from 'lodash';
+import browserBeep from 'browser-beep';
 import Bar from './Bar';
 import constants from '../../util/constants';
 import { getX, getArr, initArr } from '../../util/util';
@@ -22,6 +23,9 @@ const sort = async (
   setIndexI: TSetIndex,
   setIndexJ: TSetIndex
 ) => {
+  const beepA = browserBeep({ frequency: 830 });
+  const beepB = browserBeep({ frequency: 230 });
+
   // https://en.wikipedia.org/wiki/Insertion_sort
   let i = 1,
     j = 1;
@@ -29,6 +33,7 @@ const sort = async (
     await tween(j, i, setIndexJ, constants.DURATION).promise();
     j = i;
     while (j > 0 && extendedBarArr[j - 1].value > extendedBarArr[j].value) {
+      beepA(1);
       await Promise.all([
         tween(
           j,
@@ -48,6 +53,7 @@ const sort = async (
       await tween(j, j - 1, setIndexJ, constants.DURATION).promise();
       j = j - 1;
     }
+    beepB(1);
     await tween(i, i + 1, setIndexI, constants.DURATION).promise();
     i = i + 1;
   }
